@@ -14,17 +14,16 @@ define(function(require, exports, module) {
         var lines = [];
 
         level = level || 1;
-
         var sharps = _generateHeaderSharp(level);
         lines.push(sharps + ' ' + node.data.text);
         lines.push(EMPTY_LINE);
 
         var note = node.data.note;
         if (note) {
-            var hasSharp = /^#/.test(note);
+            var hasSharp = /^\s*-/.test(note);
             if (hasSharp) {
                 lines.push(NOTE_MARK_START);
-                note = note.replace(/^#+/gm, function($0) {
+                note = note.replace(/^-+/gm, function($0) {
                     return sharps + $0;
                 });
             }
@@ -44,7 +43,7 @@ define(function(require, exports, module) {
 
     function _generateHeaderSharp(level) {
         var sharps = '';
-        while (level--) sharps += '#';
+        while (level--) sharps += ' ';
         return sharps;
     }
 
@@ -54,16 +53,13 @@ define(function(require, exports, module) {
             parentMap = {},
             lines, line, lineInfo, level, node, parent, noteProgress, codeBlock;
 
-        // 一级标题转换 `{title}\n===` => `# {title}`
-        markdown = markdown.replace(/^(.+)\n={3,}/, function($0, $1) {
-            return '# ' + $1;
-        });
-
         lines = markdown.split(LINE_ENDING_SPLITER);
 
         // 按行分析
         for (var i = 0; i < lines.length; i++) {
             line = lines[i];
+			
+			if(!line || /^\s*$/.test(line)) continue;
 
             lineInfo = _resolveLine(line);
 
@@ -118,9 +114,9 @@ define(function(require, exports, module) {
     }
 
     function _resolveLine(line) {
-        var match = /^(#+)?\s*(.*)$/.exec(line);
+        var match = /^(\s*)-?\s*(.*)$/.exec(line);
         return {
-            level: match[1] && match[1].length || null,
+            level: match[1] && Math.floor(match[1].length / 2) + 1 || 1,
             content: match[2],
             noteStart: line == NOTE_MARK_START,
             noteClose: line == NOTE_MARK_CLOSE,
