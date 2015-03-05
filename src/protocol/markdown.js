@@ -84,6 +84,7 @@ define(function(require, exports, module) {
             // 标题处理
             level = lineInfo.level;
             node = _initNode(lineInfo.content, parentMap[level - 1]);
+            node.data.hyperlink = lineInfo.hyperlink;
             parentMap[level] = node;
         }
 
@@ -114,6 +115,18 @@ define(function(require, exports, module) {
     }
 
     function _resolveLine(line) {
+        var match = /^(\s*)-?\s*(\[(.*)\]\((.*)\)).*$/.exec(line);
+        if(match) {
+            return {
+                level: match[1] && Math.floor(match[1].length / 2) + 1 || 1,
+                content: match[3],
+                hyperlink: match[4],
+                noteStart: line == NOTE_MARK_START,
+                noteClose: line == NOTE_MARK_CLOSE,
+                codeBlock: /^\s*```/.test(line)
+            };
+        }
+
         var match = /^(\s*)-?\s*(.*)$/.exec(line);
         return {
             level: match[1] && Math.floor(match[1].length / 2) + 1 || 1,
